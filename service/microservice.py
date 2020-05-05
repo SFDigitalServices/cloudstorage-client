@@ -1,10 +1,12 @@
 """Main application module"""
 import os
-import json
-import jsend
+from urllib.parse import urlparse
 import sentry_sdk
 import falcon
-from .resources.welcome import Welcome
+import requests
+
+CLOUDSTORAGE_URL = os.environ.get('CLOUDSTORAGE_URL')
+CLOUDSTORAGE_API_KEY = os.environ.get('CLOUDSTORAGE_API_KEY')
 
 def start_service():
     """Start this service
@@ -14,14 +16,19 @@ def start_service():
     sentry_sdk.init(os.environ.get('SENTRY_DSN'))
     # Initialize Falcon
     api = falcon.API()
-    api.add_route('/welcome', Welcome())
-    api.add_sink(default_error, '')
+    api.add_sink(cloud_storage_service, '')
     return api
 
-def default_error(_req, resp):
-    """Handle default error"""
-    resp.status = falcon.HTTP_404
-    msg_error = jsend.error('404 - Not Found')
-
-    sentry_sdk.capture_message(msg_error)
-    resp.body = json.dumps(msg_error)
+def cloud_storage_service(_req, resp):
+    """Send the request through to the cloudstorage microservice"""
+    path = urlparse(_req.uri).path[1:]
+    response = requests.get(
+        CLOUDSTORAGE_URL,
+        params={
+            'name':path,
+            'apikey':CLOUDSTORAGE_API_KEY
+        }
+    )
+    resp.status = falcon.get_http_status(response.status_code)
+    resp.content_type = response.headers['Content-Type']
+    resp.body = response.content

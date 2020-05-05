@@ -1,0 +1,4 @@
+[run]
+omit =
+    # omit this file
+    service/resources/hooks.py
