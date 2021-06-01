@@ -22,8 +22,17 @@ def start_service():
 def cloud_storage_service(_req, resp):
     """Send the request through to the cloudstorage microservice"""
     path = urlparse(_req.uri).path[1:]
+
+    # determine whether to use amazon s3 or azure blob storage
+    # Use 'az' at beginning of the path to signal that file is from azure
+    # eg. https://domain.com/az/some_file.pdf
+    microservice_url = CLOUDSTORAGE_URL # default to s3
+    if path[0:3] == 'az/':
+        microservice_url = CLOUDSTORAGE_URL.replace('1.0', '2.0', 1)
+        path = path[3:]
+
     response = requests.get(
-        CLOUDSTORAGE_URL,
+        microservice_url,
         params={
             'name':path,
             'apikey':CLOUDSTORAGE_API_KEY
