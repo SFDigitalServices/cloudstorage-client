@@ -6,6 +6,11 @@ import pytest
 from falcon import testing
 import service.microservice
 
+ENV_VARS = {
+    "CLOUDSTORAGE_URL": "https://endpoint.api.com",
+    "CLOUDSTORAGE_API_KEY": "1234567"
+}
+
 FILES_PATH = 'tests/resources/'
 
 @pytest.fixture()
@@ -16,10 +21,10 @@ def client():
 @pytest.fixture
 def mock_env(monkeypatch):
     """ mock environment var """
-    monkeypatch.setenv("CLOUDSTORAGE_URL", "https://endpoint.api.com")
-    monkeypatch.setenv("CLOUDSTORAGE_API_KEY", "1234567")
+    for key in ENV_VARS:
+        monkeypatch.setenv(key, ENV_VARS[key])
 
-def test_endpoint(mock_env, client):
+def test_endpoint(client, mock_env):
     # pylint: disable=unused-argument
     """Test the endpoint"""
 
