@@ -34,7 +34,8 @@ def cloud_storage_service(_req, resp):
         params={
             'name':path,
             'apikey':os.environ.get('CLOUDSTORAGE_API_KEY')
-        }
+        },
+        timeout=300
     )
     resp.status = falcon.get_http_status(response.status_code)
     resp.content_type = response.headers['Content-Type']
