@@ -1,6 +1,6 @@
 """Main application module"""
 import os
-from urllib.parse import urlparse
+from urllib import parse
 import sentry_sdk
 import falcon
 import requests
@@ -18,7 +18,7 @@ def start_service():
 
 def cloud_storage_service(_req, resp):
     """Send the request through to the cloudstorage microservice"""
-    parsed = urlparse(_req.uri)
+    parsed = parse.urlparse(_req.uri)
 
     # strip off leading /
     path = parsed.path[1:]
@@ -28,16 +28,23 @@ def cloud_storage_service(_req, resp):
     # eg. https://domain.com/az/some_file.pdf
     microservice_url = os.environ.get('CLOUDSTORAGE_URL') # default to s3
 
+    request_params = {
+        'name':path,
+        'apikey':os.environ.get('CLOUDSTORAGE_API_KEY')
+    }
+
     if path[0:3] == 'az/':
-        microservice_url = microservice_url.replace('1.0', '2.0', 1) + "?" + parsed.query
-        path = path[3:]
+        microservice_url = microservice_url.replace('1.0', '2.0', 1)
+        request_params['name'] = path[3:]  # remove az from name
+
+        # pass thru querystring
+        parsed_query_dict = parse.parse_qs(parsed.query)
+        for param, val in parsed_query_dict.items():
+            request_params[param] = val[0]
 
     response = requests.get(
         microservice_url,
-        params={
-            'name':path,
-            'apikey':os.environ.get('CLOUDSTORAGE_API_KEY')
-        },
+        params=request_params,
         timeout=300
     )
     resp.status = falcon.get_http_status(response.status_code)

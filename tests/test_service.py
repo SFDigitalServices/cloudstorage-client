@@ -21,8 +21,8 @@ def client():
 @pytest.fixture
 def mock_env(monkeypatch):
     """ mock environment var """
-    for key in ENV_VARS:
-        monkeypatch.setenv(key, ENV_VARS[key])
+    for key, val in ENV_VARS.items():
+        monkeypatch.setenv(key, val)
 
 def test_endpoint(client, mock_env):
     # pylint: disable=unused-argument
@@ -42,7 +42,7 @@ def test_endpoint(client, mock_env):
             assert response.content == content
 
             # happy path azure blob storage
-            response = client.simulate_get('/az/dummy.pdf')
+            response = client.simulate_get('/az/dummy.pdf?src=abc')
             assert response.status_code == 200
             assert response.headers['Content-Type'] == 'application/pdf'
             assert response.content == content
